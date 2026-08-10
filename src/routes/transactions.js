@@ -1,5 +1,5 @@
 // ========================================================
-// ROUTE TRANSAKSI KEUANGAN (CRUD)
+// ROUTE TRANSAKSI KEUANGAN (CRUD DENGAN RELASI CATEGORIES)
 // ========================================================
 
 const express = require('express');
@@ -7,16 +7,15 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const cekLogin = require('../middleware/auth');
 
-// Pastikan semua endpoint transaksi wajib Login dulu!
 router.use(cekLogin);
 
-// 1. LIHAT SEMUA TRANSAKSI SAYA
+// 1. LIHAT SEMUA TRANSAKSI SAYA (TERMASUK DETAIL KATEGORI VIA JOIN)
 router.get('/', async (req, res) => {
   try {
     const { data: daftarTransaksi, error } = await supabase
       .from('transactions')
-      .select('*')
-      .eq('user_id', req.user.id) // Kunci: Hanya data milik user ini saja
+      .select('*, category:categories(id, name, type, icon)')
+      .eq('user_id', req.user.id)
       .order('date', { ascending: false });
 
     if (error) {
@@ -29,29 +28,29 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 2. TAMBAH TRANSAKSI BARU (PEMASUKAN / PENGELUARAN)
+// 2. TAMBAH TRANSAKSI BARU
 router.post('/', async (req, res) => {
   try {
-    const { title, amount, type, category } = req.body;
+    const { title, amount, type, category_id, description, date } = req.body;
 
-    if (!title || !amount || !type) {
+    if (!title || amount === undefined || !type) {
       return res.status(400).json({ error: 'Judul, Jumlah, dan Jenis transaksi wajib diisi!' });
     }
 
-    // Simpan ke database Supabase
     const { data: transaksiBaru, error } = await supabase
       .from('transactions')
       .insert([
         {
-          user_id: req.user.id, // Otomatis mengikat ke ID user yang sedang login
+          user_id: req.user.id,
           title: title,
           amount: Number(amount),
-          type: type, // 'income' atau 'expense'
-          category: category || 'Lainnya',
-          date: new Date().toISOString().split('T')[0]
+          type: type,
+          category_id: category_id || null,
+          description: description || '',
+          date: date || new Date().toISOString().split('T')[0]
         }
       ])
-      .select();
+      .select('*, category:categories(id, name, type, icon)');
 
     if (error) {
       return res.status(400).json({ error: error.message });
@@ -75,7 +74,7 @@ router.delete('/:id', async (req, res) => {
       .from('transactions')
       .delete()
       .eq('id', idTransaksi)
-      .eq('user_id', req.user.id) // Keamanan ganda: pastikan pemiliknya sama
+      .eq('user_id', req.user.id)
       .select();
 
     if (error) {

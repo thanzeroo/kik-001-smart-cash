@@ -9,6 +9,7 @@ require('dotenv').config();
 // Import Route / Jalur API
 const authRoutes = require('./src/routes/auth');
 const transactionRoutes = require('./src/routes/transactions');
+const categoryRoutes = require('./src/routes/categories');
 const summaryRoutes = require('./src/routes/summary');
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(express.static('public')); // Melayani tampilan Web GUI Dashboard
 // Hubungkan Jalur API
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/summary', summaryRoutes);
 
 // Jalankan Server Express

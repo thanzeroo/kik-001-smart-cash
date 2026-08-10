@@ -15,7 +15,6 @@
       --text: #ededed;
       --text-muted: #a1a1aa;
       --accent: #ffffff;
-      --accent-hover: #e5e5e5;
       --danger: #ef4444;
     }
 
@@ -34,7 +33,7 @@
       flex-direction: column;
     }
 
-    /* AUTH OVERLAY / MODAL */
+    /* AUTH OVERLAY */
     .auth-overlay {
       position: fixed;
       inset: 0;
@@ -164,7 +163,7 @@
       color: white;
     }
 
-    /* DASHBOARD */
+    /* DASHBOARD LAYOUT */
     .container {
       max-width: 900px;
       margin: 0 auto;
@@ -343,7 +342,7 @@
     </header>
 
     <div class="grid">
-      <!-- Kiri: Tambah Transaksi -->
+      <!-- Kiri: Tambah Transaksi & Tambah Kategori -->
       <div>
         <div class="card">
           <div class="card-title">Tambah Transaksi</div>
@@ -358,14 +357,16 @@
             </div>
             <div class="form-group">
               <label>Tipe</label>
-              <select id="txType">
-                <option value="income">Pemasukan (+)</option>
+              <select id="txType" onchange="filterCategoriesBySelectedType()">
                 <option value="expense">Pengeluaran (-)</option>
+                <option value="income">Pemasukan (+)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Kategori</label>
-              <input type="text" id="txCategory" placeholder="Makanan / Gaji" required>
+              <label>Kategori (Database)</label>
+              <select id="txCategorySelect" required>
+                <option value="">Memuat kategori...</option>
+              </select>
             </div>
             <button type="submit" class="btn">Simpan</button>
           </form>
@@ -403,6 +404,7 @@
 
   <script>
     let token = localStorage.getItem('token') || '';
+    let allCategories = [];
 
     window.addEventListener('DOMContentLoaded', () => {
       if (token) {
@@ -504,7 +506,42 @@
 
     async function loadDashboard() {
       if (!token) return;
-      await Promise.all([loadSummary(), loadTransactions()]);
+      await Promise.all([loadCategories(), loadSummary(), loadTransactions()]);
+    }
+
+    async function loadCategories() {
+      try {
+        const res = await fetch('/api/categories', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) return;
+
+        allCategories = data.categories || [];
+        filterCategoriesBySelectedType();
+      } catch (err) {
+        console.error('Gagal memuat kategori:', err);
+      }
+    }
+
+    function filterCategoriesBySelectedType() {
+      const selectedType = document.getElementById('txType').value;
+      const selectElem = document.getElementById('txCategorySelect');
+      selectElem.innerHTML = '';
+
+      const filtered = allCategories.filter(c => c.type === selectedType);
+
+      if (filtered.length === 0) {
+        selectElem.innerHTML = '<option value="">(Tidak ada kategori)</option>';
+        return;
+      }
+
+      filtered.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.innerText = c.name;
+        selectElem.appendChild(opt);
+      });
     }
 
     async function loadSummary() {
@@ -545,11 +582,12 @@
           li.className = 'tx-item';
           const isIncome = tx.type === 'income';
           const sign = isIncome ? '+' : '-';
+          const categoryName = tx.category ? tx.category.name : 'Lainnya';
 
           li.innerHTML = `
             <div>
               <div class="tx-title">${tx.title}</div>
-              <div class="tx-meta">${tx.category || 'Lainnya'} • ${tx.date}</div>
+              <div class="tx-meta">${categoryName} • ${tx.date}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <span class="tx-val">${sign} Rp ${Number(tx.amount).toLocaleString('id-ID')}</span>
@@ -568,7 +606,7 @@
       const title = document.getElementById('txTitle').value;
       const amount = document.getElementById('txAmount').value;
       const type = document.getElementById('txType').value;
-      const category = document.getElementById('txCategory').value;
+      const category_id = document.getElementById('txCategorySelect').value;
 
       try {
         const res = await fetch('/api/transactions', {
@@ -577,14 +615,13 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ title, amount, type, category })
+          body: JSON.stringify({ title, amount, type, category_id })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
         document.getElementById('txTitle').value = '';
         document.getElementById('txAmount').value = '';
-        document.getElementById('txCategory').value = '';
 
         loadDashboard();
       } catch (err) {
