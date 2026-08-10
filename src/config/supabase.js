@@ -1,13 +1,21 @@
+// ========================================================
+// CONFIG KONEKSI SUPABASE
+// ========================================================
+// Berisi inisialisasi koneksi antara Express ke Supabase
+// Supabase menyediakan 2 kunci: URL dan API Key (Anon/Service Role)
+
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const url = process.env.SUPABASE_URL;
+const key = process.env.SUPABASE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.warn('⚠️ Warning: SUPABASE_URL atau SUPABASE_KEY belum diisi di file .env');
+// Peringatan jika lupa isi file .env
+if (!url || !key) {
+  console.log('⚠️ Waduh! SUPABASE_URL atau SUPABASE_KEY belum diisi di file .env');
 }
 
-const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder-key');
+// Buat client koneksi supabase
+const supabase = createClient(url || '', key || '');
 
 module.exports = supabase;

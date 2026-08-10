@@ -1,104 +1,98 @@
+// ========================================================
+// ROUTE AUTENTIKASI (REGISTER & LOGIN)
+// ========================================================
+
 const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabase');
-const authenticateUser = require('../middleware/auth');
+const cekLogin = require('../middleware/auth');
 
-// Register User (Otomatis Verified via Admin Client & Sync ke public.profiles)
+// 1. DAFAR AKUN BARU (REGISTER)
 router.post('/register', async (req, res) => {
-  const { email, password, username, full_name, role } = req.body;
+  try {
+    const { email, password, username, full_name, role } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password wajib diisi.' });
-  }
-
-  const generatedUsername = username || email.split('@')[0];
-
-  // 1. Buat user di Auth Supabase
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: {
-      username: generatedUsername,
-      full_name: full_name || '',
-      role: role || 'user',
+    // Validasi sederhana
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email dan Password wajib diisi!' });
     }
-  });
 
-  if (error) {
-    return res.status(400).json({ error: error.message });
-  }
+    const usernameBaru = username || email.split('@')[0];
 
-  const user = data.user;
-
-  // 2. Simpan/Sync data profil ke tabel public.profiles di Database
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .upsert([
-      {
-        id: user.id,
-        username: generatedUsername,
+    // Buat user di Auth Supabase
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email,
+      password: password,
+      email_confirm: true, // Langsung aktif tanpa perlu klik link email
+      user_metadata: {
+        username: usernameBaru,
         full_name: full_name || '',
         role: role || 'user',
       }
-    ]);
+    });
 
-  if (profileError) {
-    console.warn('Profile sync warning:', profileError.message);
-  }
+    if (authError) {
+      return res.status(400).json({ error: authError.message });
+    }
 
-  return res.status(201).json({
-    message: 'Registrasi user baru berhasil! Tersimpan di tabel profiles.',
-    user: {
-      id: user.id,
-      email: user.email,
-      username: generatedUsername,
+    // Masukkan data profil tambahan ke tabel public.profiles di database
+    await supabase.from('profiles').upsert([{
+      id: authData.user.id,
+      username: usernameBaru,
       full_name: full_name || '',
       role: role || 'user',
-    },
-  });
+    }]);
+
+    return res.status(201).json({
+      message: 'Pendaftaran akun berhasil! Silakan Login.',
+      user: authData.user
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Gagal mendaftarkan akun.' });
+  }
 });
 
-// Login User
+// 2. MASUK AKUN (LOGIN)
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password wajib diisi.' });
-  }
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email dan Password wajib diisi!' });
+    }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    // Login ke Supabase
+    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
-    return res.status(400).json({ error: error.message });
-  }
+    if (loginError) {
+      return res.status(400).json({ error: 'Email atau password salah!' });
+    }
 
-  // Ambil data profile lengkap dari public.profiles
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
+    // Ambil detail profil user dari tabel profiles
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', loginData.user.id)
+      .single();
 
-  return res.json({
-    message: 'Login berhasil.',
-    access_token: data.session.access_token,
-    user: {
-      ...data.user,
-      profile: profile || {
-        username: data.user.user_metadata?.username,
-        full_name: data.user.user_metadata?.full_name,
-        role: data.user.user_metadata?.role || 'user'
+    return res.json({
+      message: 'Login Berhasil!',
+      access_token: loginData.session.access_token,
+      user: {
+        ...loginData.user,
+        profile: profileData || loginData.user.user_metadata
       }
-    },
-  });
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Terjadi masalah saat login.' });
+  }
 });
 
-// Get User Profile
-router.get('/me', authenticateUser, async (req, res) => {
+// 3. AMBIL DATA PROFIL AKUN SAYA (ME)
+router.get('/me', cekLogin, async (req, res) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -107,7 +101,7 @@ router.get('/me', authenticateUser, async (req, res) => {
 
   return res.json({
     user: req.user,
-    profile: profile || null,
+    profile: profile || null
   });
 });
 
