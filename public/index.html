@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Cash - Aplikasi Keuangan</title>
+  <title>Smart Cash - Minimalist Finance</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #0f172a;
-      --card-bg: rgba(30, 41, 59, 0.7);
-      --card-border: rgba(255, 255, 255, 0.1);
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --success: #10b981;
+      --bg: #0a0a0a;
+      --surface: #121212;
+      --surface-border: #262626;
+      --text: #ededed;
+      --text-muted: #a1a1aa;
+      --accent: #ffffff;
+      --accent-hover: #e5e5e5;
       --danger: #ef4444;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
     }
 
     * {
@@ -27,149 +26,135 @@
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: radial-gradient(circle at top right, #1e1b4b, #0f172a 60%);
-      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Container untuk Login & Register Modal/View */
+    /* AUTH OVERLAY / MODAL */
     .auth-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(16px);
-      z-index: 999;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       padding: 1.5rem;
     }
 
-    .auth-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-
-    .auth-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .auth-header h2 {
-      font-size: 2rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #a5b4fc, #6366f1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
-    }
-
-    .auth-header p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .tab-buttons {
-      display: flex;
-      background: rgba(15, 23, 42, 0.6);
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
       border-radius: 12px;
-      padding: 4px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .auth-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+
+    .auth-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
       margin-bottom: 1.5rem;
-      border: 1px solid var(--card-border);
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 1.25rem;
     }
 
     .tab-btn {
       flex: 1;
-      padding: 0.6rem;
+      padding: 0.5rem;
+      background: none;
       border: none;
-      background: transparent;
+      border-bottom: 2px solid transparent;
       color: var(--text-muted);
-      font-weight: 700;
-      font-size: 0.9rem;
-      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
       cursor: pointer;
-      transition: all 0.2s;
     }
 
     .tab-btn.active {
-      background: var(--primary);
-      color: white;
+      color: var(--accent);
+      border-bottom-color: var(--accent);
     }
 
     .form-group {
-      margin-bottom: 1.2rem;
+      margin-bottom: 1rem;
     }
 
     label {
       display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: var(--text-muted);
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.35rem;
     }
 
     input, select {
       width: 100%;
-      padding: 0.8rem 1rem;
-      border-radius: 10px;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--text-main);
-      font-size: 0.95rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      font-size: 0.9rem;
       font-family: inherit;
-      transition: all 0.2s;
     }
 
     input:focus, select:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      border-color: var(--accent);
     }
 
     .btn {
       width: 100%;
-      padding: 0.85rem 1rem;
-      border-radius: 10px;
-      border: none;
-      background: var(--primary);
-      color: white;
-      font-weight: 700;
-      font-size: 1rem;
+      padding: 0.65rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #000000;
+      font-weight: 600;
+      font-size: 0.875rem;
       cursor: pointer;
-      transition: all 0.2s;
       margin-top: 0.5rem;
+      transition: opacity 0.2s;
     }
 
     .btn:hover {
-      background: var(--primary-hover);
-      transform: translateY(-1px);
+      opacity: 0.9;
     }
 
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-main);
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--surface-border);
     }
 
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.2);
+    .btn-outline:hover {
+      border-color: var(--text-muted);
     }
 
     .btn-danger {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
+      background: transparent;
+      color: var(--danger);
       border: 1px solid rgba(239, 68, 68, 0.3);
-      padding: 0.35rem 0.7rem;
-      font-size: 0.8rem;
-      border-radius: 8px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
       width: auto;
       margin-top: 0;
     }
@@ -179,55 +164,41 @@
       color: white;
     }
 
-    /* Dashboard UI */
-    .dashboard-container {
-      max-width: 1100px;
+    /* DASHBOARD */
+    .container {
+      max-width: 900px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
+      width: 100%;
     }
 
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--surface-border);
       margin-bottom: 2rem;
-      padding-bottom: 1.2rem;
-      border-bottom: 1px solid var(--card-border);
     }
 
-    .header-user {
+    .brand {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .user-panel {
       display: flex;
       align-items: center;
       gap: 1rem;
-    }
-
-    .user-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #a855f7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.2rem;
-      color: white;
-    }
-
-    .user-info .name {
-      font-weight: 700;
-      font-size: 1rem;
-    }
-
-    .user-info .username {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
     }
 
     .grid {
       display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 1.5rem;
+      grid-template-columns: 1fr 1.8fr;
+      gap: 2rem;
     }
 
     @media (max-width: 768px) {
@@ -237,234 +208,193 @@
     }
 
     .card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 1.25rem;
       margin-bottom: 1.5rem;
     }
 
     .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 1.2rem;
-      color: #e2e8f0;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
     }
 
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
+      gap: 0.75rem;
       margin-bottom: 1.5rem;
     }
 
-    .summary-card {
-      background: rgba(15, 23, 42, 0.5);
-      border-radius: 16px;
-      padding: 1.2rem;
-      border: 1px solid var(--card-border);
+    .summary-box {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 1rem;
       text-align: center;
     }
 
-    .summary-card .val {
-      font-size: 1.4rem;
-      font-weight: 800;
-      margin-top: 0.4rem;
+    .summary-box .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
     }
 
-    .val.income { color: var(--success); }
-    .val.expense { color: var(--danger); }
-    .val.balance { color: #38bdf8; }
+    .summary-box .value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
 
     .tx-list {
       list-style: none;
-      max-height: 400px;
-      overflow-y: auto;
     }
 
     .tx-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 1.2rem;
-      border-radius: 14px;
-      background: rgba(15, 23, 42, 0.4);
-      margin-bottom: 0.8rem;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--surface-border);
     }
 
-    .tx-info .title {
-      font-weight: 700;
-      font-size: 0.95rem;
+    .tx-item:last-child {
+      border-bottom: none;
     }
 
-    .tx-info .meta {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      margin-top: 0.2rem;
+    .tx-title {
+      font-size: 0.875rem;
+      font-weight: 500;
     }
 
-    .tx-amount {
-      font-weight: 800;
-      font-size: 1.05rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .badge-role {
+    .tx-meta {
       font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      font-weight: 700;
-      text-transform: uppercase;
+      color: var(--text-muted);
     }
-    .badge-role.admin { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
-    .badge-role.vip { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
-    .badge-role.user { background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); }
+
+    .tx-val {
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-mono: monospace;
+    }
   </style>
 </head>
 <body>
 
-  <!-- MODAL / OVERLAY AUTHENTICATION -->
+  <!-- AUTH MODAL -->
   <div class="auth-overlay" id="authOverlay">
-    <div class="auth-card">
-      <div class="auth-header">
-        <h2>💎 Smart Cash</h2>
-        <p>Kelola Keuangan Pribadi Anda Secara Pintar</p>
-      </div>
+    <div class="auth-box">
+      <div class="auth-title">Smart Cash</div>
+      <div class="auth-subtitle">Sistem Pencatatan Keuangan Minimalis</div>
 
-      <!-- Tab Switcher -->
-      <div class="tab-buttons">
-        <button class="tab-btn active" id="tabLoginBtn" onclick="switchTab('login')">Masuk (Login)</button>
-        <button class="tab-btn" id="tabRegisterBtn" onclick="switchTab('register')">Daftar Akun</button>
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Masuk</button>
+        <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Daftar</button>
       </div>
 
       <!-- FORM LOGIN -->
-      <form id="loginForm" onsubmit="handleLogin(event)">
+      <form id="formLogin" onsubmit="handleLogin(event)">
         <div class="form-group">
           <label>Email</label>
-          <input type="email" id="loginEmail" value="user@demo.com" placeholder="email@domain.com" required>
+          <input type="email" id="loginEmail" placeholder="nama@email.com" required>
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="loginPassword" value="password123" placeholder="******" required>
+          <input type="password" id="loginPassword" placeholder="••••••••" required>
         </div>
-        <button type="submit" class="btn">Masuk Ke Dashboard</button>
+        <button type="submit" class="btn">Masuk</button>
       </form>
 
       <!-- FORM REGISTER -->
-      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
+      <form id="formRegister" onsubmit="handleRegister(event)" style="display: none;">
         <div class="form-group">
-          <label>Username Unik</label>
-          <input type="text" id="regUsername" placeholder="Contoh: than_zero" required>
+          <label>Username</label>
+          <input type="text" id="regUsername" placeholder="username" required>
         </div>
         <div class="form-group">
           <label>Nama Lengkap</label>
-          <input type="text" id="regName" placeholder="Contoh: Thania Zero" required>
+          <input type="text" id="regName" placeholder="Nama Lengkap" required>
         </div>
         <div class="form-group">
           <label>Email</label>
-          <input type="email" id="regEmail" placeholder="email@domain.com" required>
+          <input type="email" id="regEmail" placeholder="nama@email.com" required>
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="regPassword" placeholder="Password minimal 6 karakter" required minlength="6">
+          <input type="password" id="regPassword" placeholder="••••••••" required minlength="6">
         </div>
-        <div class="form-group">
-          <label>Status Akun / Role</label>
-          <select id="regRole">
-            <option value="user">👤 Regular User</option>
-            <option value="vip">⭐ VIP Member</option>
-            <option value="admin">👑 Administrator</option>
-          </select>
-        </div>
-        <button type="submit" class="btn">Daftar & Buat Akun</button>
+        <button type="submit" class="btn">Daftar Akun</button>
       </form>
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD KEUANGAN -->
-  <div class="dashboard-container">
+  <!-- DASHBOARD UTAMA -->
+  <div class="container">
     <header>
-      <div style="display: flex; align-items: center; gap: 0.8rem;">
-        <h1 style="font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #a5b4fc, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          💎 Smart Cash
-        </h1>
-      </div>
-
-      <!-- User Profile Header Info -->
-      <div class="header-user">
-        <div class="user-avatar" id="userAvatar">U</div>
-        <div class="user-info">
-          <div class="name" id="userName">User... <span class="badge-role user" id="userRoleBadge">User</span></div>
-          <div class="username" id="userEmail">@username</div>
-        </div>
-        <button class="btn btn-secondary" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; margin-top:0;" onclick="logout()">Keluar</button>
+      <div class="brand">Smart Cash</div>
+      <div class="user-panel">
+        <span id="userDisplayName">user</span>
+        <button class="btn btn-outline" style="width: auto; padding: 0.35rem 0.75rem; font-size: 0.75rem;" onclick="logout()">Keluar</button>
       </div>
     </header>
 
     <div class="grid">
-      <!-- Left Column: Add Transaction -->
+      <!-- Kiri: Tambah Transaksi -->
       <div>
         <div class="card">
-          <div class="card-title">➕ Tambah Transaksi Keuangan</div>
-          <form onsubmit="handleAddTransaction(event)">
+          <div class="card-title">Tambah Transaksi</div>
+          <form onsubmit="handleAddTx(event)">
             <div class="form-group">
-              <label>Judul / Keterangan</label>
-              <input type="text" id="txTitle" placeholder="Misal: Gaji Bulanan, Beli Makan" required>
+              <label>Keterangan</label>
+              <input type="text" id="txTitle" placeholder="Misal: Makan Siang" required>
             </div>
             <div class="form-group">
               <label>Nominal (Rp)</label>
-              <input type="number" id="txAmount" placeholder="50000" required min="1">
+              <input type="number" id="txAmount" placeholder="0" required min="1">
             </div>
             <div class="form-group">
-              <label>Jenis Transaksi</label>
+              <label>Tipe</label>
               <select id="txType">
-                <option value="income">💚 Pemasukan (Income)</option>
-                <option value="expense">❤️ Pengeluaran (Expense)</option>
+                <option value="income">Pemasukan (+)</option>
+                <option value="expense">Pengeluaran (-)</option>
               </select>
             </div>
             <div class="form-group">
               <label>Kategori</label>
-              <input type="text" id="txCategory" placeholder="Gaji, Makanan, Belanja, Transport" required>
+              <input type="text" id="txCategory" placeholder="Makanan / Gaji" required>
             </div>
-            <button type="submit" class="btn">+ Simpan Transaksi</button>
+            <button type="submit" class="btn">Simpan</button>
           </form>
         </div>
       </div>
 
-      <!-- Right Column: Summary & Transaction History -->
+      <!-- Kanan: Summary & List -->
       <div>
-        <!-- Summary Cards -->
+        <!-- Summary Box -->
         <div class="summary-grid">
-          <div class="summary-card">
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">TOTAL PEMASUKAN</div>
-            <div class="val income" id="sumIncome">Rp 0</div>
+          <div class="summary-box">
+            <div class="label">Pemasukan</div>
+            <div class="value" id="valIncome">Rp 0</div>
           </div>
-          <div class="summary-card">
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">TOTAL PENGELUARAN</div>
-            <div class="val expense" id="sumExpense">Rp 0</div>
+          <div class="summary-box">
+            <div class="label">Pengeluaran</div>
+            <div class="value" id="valExpense">Rp 0</div>
           </div>
-          <div class="summary-card">
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">SISA SALDO</div>
-            <div class="val balance" id="sumBalance">Rp 0</div>
+          <div class="summary-box">
+            <div class="label">Saldo</div>
+            <div class="value" id="valBalance">Rp 0</div>
           </div>
         </div>
 
-        <!-- History Card -->
+        <!-- Riwayat Transaksi -->
         <div class="card">
-          <div class="card-title" style="justify-content: space-between;">
-            <span>📋 Riwayat Keuangan Saya</span>
-            <button class="btn btn-secondary" style="width: auto; padding: 0.35rem 0.8rem; font-size: 0.8rem; margin-top:0;" onclick="loadDashboardData()">🔄 Refresh</button>
-          </div>
+          <div class="card-title">Riwayat Transaksi</div>
           <ul class="tx-list" id="txList">
-            <li style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Memuat data transaksi...</li>
+            <li style="text-align: center; color: var(--text-muted); padding: 1.5rem; font-size: 0.85rem;">Memuat data...</li>
           </ul>
         </div>
       </div>
@@ -473,39 +403,24 @@
 
   <script>
     let token = localStorage.getItem('token') || '';
-    let currentUser = null;
 
-    // Inisialisasi awal saat halaman dibuka
     window.addEventListener('DOMContentLoaded', () => {
       if (token) {
         verifySession();
       } else {
-        showAuthModal(true);
+        showAuth(true);
       }
     });
 
-    function showAuthModal(show) {
-      const overlay = document.getElementById('authOverlay');
-      overlay.style.display = show ? 'flex' : 'none';
+    function showAuth(show) {
+      document.getElementById('authOverlay').style.display = show ? 'flex' : 'none';
     }
 
     function switchTab(tab) {
-      const loginBtn = document.getElementById('tabLoginBtn');
-      const regBtn = document.getElementById('tabRegisterBtn');
-      const loginForm = document.getElementById('loginForm');
-      const regForm = document.getElementById('registerForm');
-
-      if (tab === 'login') {
-        loginBtn.classList.add('active');
-        regBtn.classList.remove('active');
-        loginForm.style.display = 'block';
-        regForm.style.display = 'none';
-      } else {
-        regBtn.classList.add('active');
-        loginBtn.classList.remove('active');
-        regForm.style.display = 'block';
-        loginForm.style.display = 'none';
-      }
+      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+      document.getElementById('formLogin').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('formRegister').style.display = tab === 'register' ? 'block' : 'none';
     }
 
     async function handleLogin(e) {
@@ -524,11 +439,10 @@
 
         token = data.access_token;
         localStorage.setItem('token', token);
-        
-        currentUser = data.user;
-        updateUserUI(data.user);
-        showAuthModal(false);
-        loadDashboardData();
+
+        showAuth(false);
+        updateUserDisplay(data.user);
+        loadDashboard();
       } catch (err) {
         alert('Gagal Login: ' + err.message);
       }
@@ -540,18 +454,17 @@
       const full_name = document.getElementById('regName').value;
       const email = document.getElementById('regEmail').value;
       const password = document.getElementById('regPassword').value;
-      const role = document.getElementById('regRole').value;
 
       try {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, full_name, email, password, role })
+          body: JSON.stringify({ username, full_name, email, password })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        alert('Pendaftaran Berhasil! Mengalihkan ke login...');
+        alert('Pendaftaran Berhasil! Silakan Login.');
         document.getElementById('loginEmail').value = email;
         document.getElementById('loginPassword').value = password;
         switchTab('login');
@@ -568,48 +481,33 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        currentUser = data.user;
-        if (data.profile) {
-          currentUser.profile = data.profile;
-        }
-        updateUserUI(currentUser);
-        showAuthModal(false);
-        loadDashboardData();
+        showAuth(false);
+        updateUserDisplay(data.user);
+        loadDashboard();
       } catch (err) {
         logout();
       }
     }
 
-    function updateUserUI(user) {
+    function updateUserDisplay(user) {
       if (!user) return;
-
       const profile = user.profile || user.user_metadata || {};
-      const fullName = profile.full_name || user.email.split('@')[0];
-      const username = profile.username ? `@${profile.username}` : user.email;
-      const role = profile.role || 'user';
-
-      document.getElementById('userName').childNodes[0].nodeValue = fullName + ' ';
-      document.getElementById('userEmail').innerText = username;
-      document.getElementById('userAvatar').innerText = fullName.charAt(0).toUpperCase();
-
-      const badge = document.getElementById('userRoleBadge');
-      badge.className = `badge-role ${role}`;
-      badge.innerText = role === 'admin' ? '👑 ADMIN' : (role === 'vip' ? '⭐ VIP' : '👤 USER');
+      const name = profile.full_name || profile.username || user.email;
+      document.getElementById('userDisplayName').innerText = name;
     }
 
     function logout() {
       token = '';
-      currentUser = null;
       localStorage.removeItem('token');
-      showAuthModal(true);
+      showAuth(true);
     }
 
-    async function loadDashboardData() {
+    async function loadDashboard() {
       if (!token) return;
-      await Promise.all([fetchSummary(), fetchTransactions()]);
+      await Promise.all([loadSummary(), loadTransactions()]);
     }
 
-    async function fetchSummary() {
+    async function loadSummary() {
       try {
         const res = await fetch('/api/summary', {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -618,15 +516,15 @@
         if (!res.ok) return;
 
         const { total_income, total_expense, balance } = data.summary;
-        document.getElementById('sumIncome').innerText = 'Rp ' + total_income.toLocaleString('id-ID');
-        document.getElementById('sumExpense').innerText = 'Rp ' + total_expense.toLocaleString('id-ID');
-        document.getElementById('sumBalance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
+        document.getElementById('valIncome').innerText = 'Rp ' + total_income.toLocaleString('id-ID');
+        document.getElementById('valExpense').innerText = 'Rp ' + total_expense.toLocaleString('id-ID');
+        document.getElementById('valBalance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
       } catch (err) {
         console.error(err);
       }
     }
 
-    async function fetchTransactions() {
+    async function loadTransactions() {
       try {
         const res = await fetch('/api/transactions', {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -637,8 +535,8 @@
         const txList = document.getElementById('txList');
         txList.innerHTML = '';
 
-        if (data.transactions.length === 0) {
-          txList.innerHTML = '<li style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Belum ada transaksi. Tambahkan transaksi pertama Anda di samping!</li>';
+        if (!data.transactions || data.transactions.length === 0) {
+          txList.innerHTML = '<li style="text-align: center; color: var(--text-muted); padding: 1.5rem; font-size: 0.85rem;">Belum ada transaksi.</li>';
           return;
         }
 
@@ -646,17 +544,16 @@
           const li = document.createElement('li');
           li.className = 'tx-item';
           const isIncome = tx.type === 'income';
-          const colorClass = isIncome ? 'income' : 'expense';
-          const prefix = isIncome ? '+' : '-';
+          const sign = isIncome ? '+' : '-';
 
           li.innerHTML = `
-            <div class="tx-info">
-              <div class="title">${tx.title}</div>
-              <div class="meta">📂 ${tx.category} • 📅 ${tx.date}</div>
+            <div>
+              <div class="tx-title">${tx.title}</div>
+              <div class="tx-meta">${tx.category || 'Lainnya'} • ${tx.date}</div>
             </div>
-            <div class="tx-amount">
-              <span class="val ${colorClass}">${prefix} Rp ${Number(tx.amount).toLocaleString('id-ID')}</span>
-              <button class="btn btn-danger" onclick="deleteTransaction('${tx.id}')">Hapus</button>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span class="tx-val">${sign} Rp ${Number(tx.amount).toLocaleString('id-ID')}</span>
+              <button class="btn btn-danger" onclick="deleteTx('${tx.id}')">Hapus</button>
             </div>
           `;
           txList.appendChild(li);
@@ -666,10 +563,8 @@
       }
     }
 
-    async function handleAddTransaction(e) {
+    async function handleAddTx(e) {
       e.preventDefault();
-      if (!token) return alert('Silakan login terlebih dahulu!');
-
       const title = document.getElementById('txTitle').value;
       const amount = document.getElementById('txAmount').value;
       const type = document.getElementById('txType').value;
@@ -687,20 +582,18 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        // Reset form
         document.getElementById('txTitle').value = '';
         document.getElementById('txAmount').value = '';
         document.getElementById('txCategory').value = '';
 
-        loadDashboardData();
+        loadDashboard();
       } catch (err) {
         alert('Gagal menambah transaksi: ' + err.message);
       }
     }
 
-    async function deleteTransaction(id) {
-      if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
-
+    async function deleteTx(id) {
+      if (!confirm('Hapus transaksi ini?')) return;
       try {
         const res = await fetch(`/api/transactions/${id}`, {
           method: 'DELETE',
@@ -709,9 +602,9 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        loadDashboardData();
+        loadDashboard();
       } catch (err) {
-        alert('Gagal menghapus transaksi: ' + err.message);
+        alert('Gagal menghapus: ' + err.message);
       }
     }
   </script>
