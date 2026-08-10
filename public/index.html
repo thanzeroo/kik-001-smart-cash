@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Keuangan & Tester API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top right, #1e1b4b, #0f172a 60%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a5b4fc, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.2rem;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      width: auto;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-card {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid var(--card-border);
+      text-align: center;
+    }
+
+    .summary-card .val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-top: 0.3rem;
+    }
+
+    .val.income { color: var(--success); }
+    .val.expense { color: var(--danger); }
+    .val.balance { color: #38bdf8; }
+
+    .tx-list {
+      list-style: none;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .tx-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.4);
+      margin-bottom: 0.6rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .tx-info .title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .tx-info .meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .tx-amount {
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .token-display {
+      word-break: break-all;
+      font-size: 0.75rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem;
+      border-radius: 6px;
+      color: #38bdf8;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>💰 Finance Dashboard & API Tester</h1>
+      <div class="status-badge" id="authStatus">❌ Belum Login</div>
+    </header>
+
+    <div class="grid">
+      <!-- Left Column: Auth & Form -->
+      <div>
+        <!-- Auth Card -->
+        <div class="card">
+          <div class="card-title">🔐 Autentikasi & Tambah User</div>
+          <div class="form-group">
+            <label>Username (Custom ID User)</label>
+            <input type="text" id="authUsername" placeholder="Contoh: sultan99">
+          </div>
+          <div class="form-group">
+            <label>Nama Lengkap (Opsional)</label>
+            <input type="text" id="authName" placeholder="Contoh: Sultan Keuangan">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="authEmail" value="user@demo.com" placeholder="email@domain.com">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="authPassword" value="password123" placeholder="******">
+          </div>
+          <div class="form-group">
+            <label>Role User (Spesial Status)</label>
+            <select id="authRole">
+              <option value="user">👤 Regular User</option>
+              <option value="vip">⭐ VIP / Premium</option>
+              <option value="admin">👑 Administrator</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn" onclick="login()">Login</button>
+            <button class="btn btn-secondary" onclick="register()">+ Tambah User</button>
+          </div>
+          <div id="tokenContainer" style="display: none;">
+            <div class="token-display" id="tokenValue"></div>
+          </div>
+        </div>
+
+        <!-- Add Transaction Card -->
+        <div class="card">
+          <div class="card-title">➕ Tambah Transaksi</div>
+          <div class="form-group">
+            <label>Keterangan / Judul</label>
+            <input type="text" id="txTitle" placeholder="Misal: Gaji, Makan Siang">
+          </div>
+          <div class="form-group">
+            <label>Jumlah (Rp)</label>
+            <input type="number" id="txAmount" placeholder="50000">
+          </div>
+          <div class="form-group">
+            <label>Tipe Transaksi</label>
+            <select id="txType">
+              <option value="income">Pemasukan (Income)</option>
+              <option value="expense">Pengeluaran (Expense)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Kategori</label>
+            <input type="text" id="txCategory" placeholder="Makanan, Gaji, Belanja, dll">
+          </div>
+          <button class="btn" onclick="addTransaction()">Simpan Transaksi</button>
+        </div>
+      </div>
+
+      <!-- Right Column: Summary & Transaction List -->
+      <div>
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Pemasukan</div>
+            <div class="val income" id="sumIncome">Rp 0</div>
+          </div>
+          <div class="summary-card">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Pengeluaran</div>
+            <div class="val expense" id="sumExpense">Rp 0</div>
+          </div>
+          <div class="summary-card">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Saldo (Balance)</div>
+            <div class="val balance" id="sumBalance">Rp 0</div>
+          </div>
+        </div>
+
+        <!-- Transactions List Card -->
+        <div class="card">
+          <div class="card-title" style="justify-content: space-between;">
+            <span>📊 Daftar Transaksi</span>
+            <button class="btn btn-secondary" style="width: auto; padding: 0.3rem 0.8rem; font-size: 0.8rem;" onclick="loadData()">🔄 Refresh</button>
+          </div>
+          <ul class="tx-list" id="txList">
+            <li style="text-align: center; color: var(--text-muted); padding: 2rem;">Silakan Login terlebih dahulu untuk melihat data.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let token = localStorage.getItem('token') || '';
+
+    if (token) {
+      updateAuthUI(true);
+      loadData();
+    }
+
+    function updateAuthUI(isLoggedIn, user = null) {
+      const statusBadge = document.getElementById('authStatus');
+      const tokenContainer = document.getElementById('tokenContainer');
+      const tokenValue = document.getElementById('tokenValue');
+
+      if (isLoggedIn) {
+        let roleBadge = '👤 User';
+        const profile = (user && user.profile) ? user.profile : (user ? user.user_metadata : null);
+
+        if (profile) {
+          const role = profile.role;
+          if (role === 'admin') roleBadge = '👑 Admin';
+          if (role === 'vip') roleBadge = '⭐ VIP Premium';
+        }
+
+        const usernameDisplay = profile && profile.username ? `@${profile.username}` : '';
+        const nameDisplay = profile && profile.full_name ? ` (${profile.full_name})` : '';
+
+        statusBadge.innerText = `✅ ${roleBadge} ${usernameDisplay}${nameDisplay}`;
+        statusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+        statusBadge.style.color = '#34d399';
+        tokenContainer.style.display = 'block';
+        tokenValue.innerText = 'Token: ' + token.substring(0, 25) + '...';
+      } else {
+        statusBadge.innerText = '❌ Belum Login';
+        statusBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+        statusBadge.style.color = '#f87171';
+        tokenContainer.style.display = 'none';
+      }
+    }
+
+    async function register() {
+      const username = document.getElementById('authUsername').value;
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const full_name = document.getElementById('authName').value;
+      const role = document.getElementById('authRole').value;
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password, full_name, role })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        alert(data.message || 'User berhasil ditambahkan! Silakan klik Login.');
+      } catch (err) {
+        alert('Gagal Tambah User: ' + err.message);
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        token = data.access_token;
+        localStorage.setItem('token', token);
+        updateAuthUI(true, data.user);
+        loadData();
+      } catch (err) {
+        alert('Gagal Login: ' + err.message);
+      }
+    }
+
+    async function loadData() {
+      if (!token) return;
+      await Promise.all([fetchSummary(), fetchTransactions()]);
+    }
+
+    async function fetchSummary() {
+      try {
+        const res = await fetch('/api/summary', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) return;
+
+        const { total_income, total_expense, balance } = data.summary;
+        document.getElementById('sumIncome').innerText = 'Rp ' + total_income.toLocaleString('id-ID');
+        document.getElementById('sumExpense').innerText = 'Rp ' + total_expense.toLocaleString('id-ID');
+        document.getElementById('sumBalance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function fetchTransactions() {
+      try {
+        const res = await fetch('/api/transactions', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) return;
+
+        const txList = document.getElementById('txList');
+        txList.innerHTML = '';
+
+        if (data.transactions.length === 0) {
+          txList.innerHTML = '<li style="text-align: center; color: var(--text-muted); padding: 2rem;">Belum ada transaksi. Silakan tambah transaksi baru.</li>';
+          return;
+        }
+
+        data.transactions.forEach(tx => {
+          const li = document.createElement('li');
+          li.className = 'tx-item';
+          const isIncome = tx.type === 'income';
+          const colorClass = isIncome ? 'income' : 'expense';
+          const prefix = isIncome ? '+' : '-';
+
+          li.innerHTML = `
+            <div class="tx-info">
+              <div class="title">${tx.title}</div>
+              <div class="meta">${tx.category} • ${tx.date}</div>
+            </div>
+            <div class="tx-amount">
+              <span class="val ${colorClass}">${prefix} Rp ${Number(tx.amount).toLocaleString('id-ID')}</span>
+              <button class="btn btn-danger" onclick="deleteTransaction('${tx.id}')">Hapus</button>
+            </div>
+          `;
+          txList.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function addTransaction() {
+      if (!token) return alert('Silakan login terlebih dahulu!');
+
+      const title = document.getElementById('txTitle').value;
+      const amount = document.getElementById('txAmount').value;
+      const type = document.getElementById('txType').value;
+      const category = document.getElementById('txCategory').value;
+
+      if (!title || !amount) return alert('Judul dan Jumlah wajib diisi!');
+
+      try {
+        const res = await fetch('/api/transactions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ title, amount, type, category })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        // Reset form
+        document.getElementById('txTitle').value = '';
+        document.getElementById('txAmount').value = '';
+
+        loadData();
+      } catch (err) {
+        alert('Gagal menambah transaksi: ' + err.message);
+      }
+    }
+
+    async function deleteTransaction(id) {
+      if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
+
+      try {
+        const res = await fetch(`/api/transactions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        loadData();
+      } catch (err) {
+        alert('Gagal menghapus transaksi: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
