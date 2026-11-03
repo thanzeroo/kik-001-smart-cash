@@ -25,9 +25,11 @@ router.get('/', async (req, res) => {
     let totalPemasukan = 0;
     let totalPengeluaran = 0;
 
+    const list = daftarTransaksi || [];
+
     // Hitung total dari masing-masing jenis transaksi
-    daftarTransaksi.forEach((item) => {
-      const nominal = Number(item.amount);
+    list.forEach((item) => {
+      const nominal = Number(item.amount) || 0;
       if (item.type === 'income') {
         totalPemasukan += nominal;
       } else if (item.type === 'expense') {
@@ -42,10 +44,11 @@ router.get('/', async (req, res) => {
         total_income: totalPemasukan,
         total_expense: totalPengeluaran,
         balance: sisaSaldo,
-        total_transactions: daftarTransaksi.length
+        total_transactions: list.length
       }
     });
   } catch (err) {
+    console.error('Summary calculation error:', err);
     return res.status(500).json({ error: 'Gagal mengkalkulasi ringkasan keuangan.' });
   }
 });

@@ -344,6 +344,7 @@
     <div class="grid">
       <!-- Kiri: Tambah Transaksi & Tambah Kategori -->
       <div>
+        <!-- Card Tambah Transaksi -->
         <div class="card">
           <div class="card-title">Tambah Transaksi</div>
           <form onsubmit="handleAddTx(event)">
@@ -363,12 +364,38 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Kategori (Database)</label>
-              <select id="txCategorySelect" required>
+              <label>Kategori</label>
+              <select id="txCategorySelect">
                 <option value="">Memuat kategori...</option>
               </select>
             </div>
-            <button type="submit" class="btn">Simpan</button>
+            <div class="form-group">
+              <label>Tanggal</label>
+              <input type="date" id="txDate" required>
+            </div>
+            <button type="submit" class="btn" id="btnSaveTx">Simpan</button>
+          </form>
+        </div>
+
+        <!-- Card Tambah Kategori Baru -->
+        <div class="card">
+          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;" onclick="toggleAddCategory()">
+            <span>+ Buat Kategori Baru</span>
+            <span id="toggleCatIcon" style="font-size: 0.8rem; color: var(--text-muted);">▼</span>
+          </div>
+          <form id="formAddCategory" onsubmit="handleAddCategory(event)" style="display: none; margin-top: 1rem;">
+            <div class="form-group">
+              <label>Nama Kategori</label>
+              <input type="text" id="catName" placeholder="Contoh: Belanja Online" required>
+            </div>
+            <div class="form-group">
+              <label>Tipe Kategori</label>
+              <select id="catType">
+                <option value="expense">Pengeluaran (-)</option>
+                <option value="income">Pemasukan (+)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-outline" id="btnSaveCat">Simpan Kategori</button>
           </form>
         </div>
       </div>
@@ -404,9 +431,20 @@
 
   <script>
     let token = localStorage.getItem('token') || '';
+    if (token === 'undefined' || token === 'null') {
+      token = '';
+      localStorage.removeItem('token');
+    }
+
     let allCategories = [];
 
     window.addEventListener('DOMContentLoaded', () => {
+      // Set default input tanggal ke hari ini
+      const dateElem = document.getElementById('txDate');
+      if (dateElem) {
+        dateElem.value = new Date().toISOString().split('T')[0];
+      }
+
       if (token) {
         verifySession();
       } else {
@@ -425,9 +463,19 @@
       document.getElementById('formRegister').style.display = tab === 'register' ? 'block' : 'none';
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
+      const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
 
       try {
@@ -436,8 +484,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.pesan || data.message || 'Gagal login.');
 
         token = data.access_token;
         localStorage.setItem('token', token);
@@ -452,9 +500,9 @@
 
     async function handleRegister(e) {
       e.preventDefault();
-      const username = document.getElementById('regUsername').value;
-      const full_name = document.getElementById('regName').value;
-      const email = document.getElementById('regEmail').value;
+      const username = document.getElementById('regUsername').value.trim();
+      const full_name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPassword').value;
 
       try {
@@ -463,8 +511,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, full_name, email, password })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.pesan || data.message || 'Gagal pendaftaran.');
 
         alert('Pendaftaran Berhasil! Silakan Login.');
         document.getElementById('loginEmail').value = email;
@@ -480,8 +528,8 @@
         const res = await fetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.pesan || data.message || 'Sesi habis');
 
         showAuth(false);
         updateUserDisplay(data.user);
@@ -494,7 +542,7 @@
     function updateUserDisplay(user) {
       if (!user) return;
       const profile = user.profile || user.user_metadata || {};
-      const name = profile.full_name || profile.username || user.email;
+      const name = profile.full_name || profile.username || user.email || 'Pengguna';
       document.getElementById('userDisplayName').innerText = name;
     }
 
@@ -509,12 +557,54 @@
       await Promise.all([loadCategories(), loadSummary(), loadTransactions()]);
     }
 
+    function toggleAddCategory() {
+      const form = document.getElementById('formAddCategory');
+      const icon = document.getElementById('toggleCatIcon');
+      const isHidden = form.style.display === 'none';
+      form.style.display = isHidden ? 'block' : 'none';
+      icon.innerText = isHidden ? '▲' : '▼';
+    }
+
+    async function handleAddCategory(e) {
+      e.preventDefault();
+      const name = document.getElementById('catName').value.trim();
+      const type = document.getElementById('catType').value;
+      const btn = document.getElementById('btnSaveCat');
+
+      if (!name) return;
+
+      try {
+        btn.disabled = true;
+        btn.innerText = 'Menyimpan...';
+
+        const res = await fetch('/api/categories', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ name, type })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.pesan || data.message || 'Gagal membuat kategori');
+
+        document.getElementById('catName').value = '';
+        toggleAddCategory();
+        await loadCategories();
+      } catch (err) {
+        alert('Gagal menambah kategori: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Simpan Kategori';
+      }
+    }
+
     async function loadCategories() {
       try {
         const res = await fetch('/api/categories', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) return;
 
         allCategories = data.categories || [];
@@ -529,12 +619,12 @@
       const selectElem = document.getElementById('txCategorySelect');
       selectElem.innerHTML = '';
 
-      const filtered = allCategories.filter(c => c.type === selectedType);
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.innerText = '-- Pilih Kategori (Opsional) --';
+      selectElem.appendChild(placeholder);
 
-      if (filtered.length === 0) {
-        selectElem.innerHTML = '<option value="">(Tidak ada kategori)</option>';
-        return;
-      }
+      const filtered = allCategories.filter(c => c.type === selectedType);
 
       filtered.forEach(c => {
         const opt = document.createElement('option');
@@ -549,15 +639,15 @@
         const res = await fetch('/api/summary', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) return;
 
-        const { total_income, total_expense, balance } = data.summary;
-        document.getElementById('valIncome').innerText = 'Rp ' + total_income.toLocaleString('id-ID');
-        document.getElementById('valExpense').innerText = 'Rp ' + total_expense.toLocaleString('id-ID');
-        document.getElementById('valBalance').innerText = 'Rp ' + balance.toLocaleString('id-ID');
+        const summary = data.summary || { total_income: 0, total_expense: 0, balance: 0 };
+        document.getElementById('valIncome').innerText = 'Rp ' + (summary.total_income || 0).toLocaleString('id-ID');
+        document.getElementById('valExpense').innerText = 'Rp ' + (summary.total_expense || 0).toLocaleString('id-ID');
+        document.getElementById('valBalance').innerText = 'Rp ' + (summary.balance || 0).toLocaleString('id-ID');
       } catch (err) {
-        console.error(err);
+        console.error('loadSummary error:', err);
       }
     }
 
@@ -566,7 +656,7 @@
         const res = await fetch('/api/transactions', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) return;
 
         const txList = document.getElementById('txList');
@@ -582,50 +672,61 @@
           li.className = 'tx-item';
           const isIncome = tx.type === 'income';
           const sign = isIncome ? '+' : '-';
-          const categoryName = tx.category ? tx.category.name : 'Lainnya';
+          const signColor = isIncome ? '#22c55e' : '#ef4444';
+          const categoryName = tx.category ? (typeof tx.category === 'object' ? (tx.category.name || 'Lainnya') : tx.category) : 'Lainnya';
+          const formattedDate = tx.date ? new Date(tx.date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 
           li.innerHTML = `
             <div>
-              <div class="tx-title">${tx.title}</div>
-              <div class="tx-meta">${categoryName} • ${tx.date}</div>
+              <div class="tx-title">${escapeHtml(tx.title)}</div>
+              <div class="tx-meta">${escapeHtml(categoryName)} • ${formattedDate}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <span class="tx-val">${sign} Rp ${Number(tx.amount).toLocaleString('id-ID')}</span>
+              <span class="tx-val" style="color: ${signColor};">${sign} Rp ${Number(tx.amount || 0).toLocaleString('id-ID')}</span>
               <button class="btn btn-danger" onclick="deleteTx('${tx.id}')">Hapus</button>
             </div>
           `;
           txList.appendChild(li);
         });
       } catch (err) {
-        console.error(err);
+        console.error('loadTransactions error:', err);
       }
     }
 
     async function handleAddTx(e) {
       e.preventDefault();
-      const title = document.getElementById('txTitle').value;
+      const title = document.getElementById('txTitle').value.trim();
       const amount = document.getElementById('txAmount').value;
       const type = document.getElementById('txType').value;
       const category_id = document.getElementById('txCategorySelect').value;
+      const date = document.getElementById('txDate').value;
+      const btn = document.getElementById('btnSaveTx');
+
+      if (!title || !amount) return;
 
       try {
+        if (btn) { btn.disabled = true; btn.innerText = 'Menyimpan...'; }
+
         const res = await fetch('/api/transactions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ title, amount, type, category_id })
+          body: JSON.stringify({ title, amount, type, category_id, date })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.pesan || data.message || 'Gagal menyimpan transaksi');
 
         document.getElementById('txTitle').value = '';
         document.getElementById('txAmount').value = '';
+        document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
 
         loadDashboard();
       } catch (err) {
         alert('Gagal menambah transaksi: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = 'Simpan'; }
       }
     }
 
@@ -636,8 +737,8 @@
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || data.pesan || data.message || 'Gagal menghapus transaksi');
 
         loadDashboard();
       } catch (err) {

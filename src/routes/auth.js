@@ -1,5 +1,5 @@
 // ========================================================
-// ROUTE AUTENTIKASI (REGISTER & LOGIN)
+// ROUTE AUTENTIKASI (REGISTER, LOGIN, & PROFILE)
 // ========================================================
 
 const express = require('express');
@@ -7,7 +7,7 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const cekLogin = require('../middleware/auth');
 
-// 1. DAFAR AKUN BARU (REGISTER)
+// 1. DAFTAR AKUN BARU (REGISTER)
 router.post('/register', async (req, res) => {
   try {
     const { email, password, username, full_name, role } = req.body;
@@ -17,38 +17,74 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email dan Password wajib diisi!' });
     }
 
-    const usernameBaru = username || email.split('@')[0];
-
-    // Buat user di Auth Supabase
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: email,
-      password: password,
-      email_confirm: true, // Langsung aktif tanpa perlu klik link email
-      user_metadata: {
-        username: usernameBaru,
-        full_name: full_name || '',
-        role: role || 'user',
-      }
-    });
-
-    if (authError) {
-      return res.status(400).json({ error: authError.message });
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password minimal 6 karakter!' });
     }
 
-    // Masukkan data profil tambahan ke tabel public.profiles di database
-    await supabase.from('profiles').upsert([{
-      id: authData.user.id,
-      username: usernameBaru,
-      full_name: full_name || '',
-      role: role || 'user',
-    }]);
+    const usernameBaru = (username || email.split('@')[0]).trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    let authUser = null;
+
+    // Buat user di Supabase (Gunakan admin jika tersedia agar otomatis email_confirm: true)
+    if (supabase.auth.admin && typeof supabase.auth.admin.createUser === 'function') {
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: cleanEmail,
+        password: password,
+        email_confirm: true, // Langsung aktif tanpa perlu klik tautan email
+        user_metadata: {
+          username: usernameBaru,
+          full_name: (full_name || '').trim(),
+          role: role || 'user',
+        }
+      });
+
+      if (authError) {
+        return res.status(400).json({ error: authError.message });
+      }
+      authUser = authData?.user;
+    } else {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password: password,
+        options: {
+          data: {
+            username: usernameBaru,
+            full_name: (full_name || '').trim(),
+            role: role || 'user',
+          }
+        }
+      });
+
+      if (authError) {
+        return res.status(400).json({ error: authError.message });
+      }
+      authUser = authData?.user;
+    }
+
+    if (!authUser) {
+      return res.status(400).json({ error: 'Gagal membuat pengguna baru.' });
+    }
+
+    // Masukkan data profil tambahan ke tabel public.profiles di database jika ada
+    try {
+      await supabase.from('profiles').upsert([{
+        id: authUser.id,
+        username: usernameBaru,
+        full_name: (full_name || '').trim(),
+        role: role || 'user',
+      }]);
+    } catch (upsertErr) {
+      console.warn('Upsert profile warning:', upsertErr.message);
+    }
 
     return res.status(201).json({
       message: 'Pendaftaran akun berhasil! Silakan Login.',
-      user: authData.user
+      user: authUser
     });
   } catch (err) {
-    return res.status(500).json({ error: 'Gagal mendaftarkan akun.' });
+    console.error('Register error:', err);
+    return res.status(500).json({ error: err.message || 'Gagal mendaftarkan akun.' });
   }
 });
 
@@ -63,46 +99,75 @@ router.post('/login', async (req, res) => {
 
     // Login ke Supabase
     const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim().toLowerCase(),
       password,
     });
 
     if (loginError) {
-      return res.status(400).json({ error: 'Email atau password salah!' });
+      return res.status(400).json({ error: 'Email atau password salah! (' + loginError.message + ')' });
     }
 
-    // Ambil detail profil user dari tabel profiles
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', loginData.user.id)
-      .single();
+    if (!loginData.session) {
+      return res.status(400).json({ error: 'Sesi login tidak didapatkan. Pastikan email sudah terkonfirmasi.' });
+    }
+
+    // Ambil detail profil user dari tabel profiles jika ada
+    let profileData = null;
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', loginData.user.id)
+        .single();
+      profileData = prof;
+    } catch (e) {
+      console.warn('Profile fetch warning:', e.message);
+    }
+
+    const userProfile = profileData || loginData.user.user_metadata || {};
 
     return res.json({
       message: 'Login Berhasil!',
       access_token: loginData.session.access_token,
       user: {
         ...loginData.user,
-        profile: profileData || loginData.user.user_metadata
+        profile: userProfile
       }
     });
   } catch (err) {
-    return res.status(500).json({ error: 'Terjadi masalah saat login.' });
+    console.error('Login error:', err);
+    return res.status(500).json({ error: err.message || 'Terjadi masalah saat login.' });
   }
 });
 
 // 3. AMBIL DATA PROFIL AKUN SAYA (ME)
 router.get('/me', cekLogin, async (req, res) => {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', req.user.id)
-    .single();
+  try {
+    let profile = null;
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', req.user.id)
+        .single();
+      profile = prof;
+    } catch (e) {
+      console.warn('Fetch profile warning:', e.message);
+    }
 
-  return res.json({
-    user: req.user,
-    profile: profile || null
-  });
+    const userProfile = profile || req.user.user_metadata || {};
+
+    return res.json({
+      user: {
+        ...req.user,
+        profile: userProfile
+      },
+      profile: userProfile
+    });
+  } catch (err) {
+    console.error('Me endpoint error:', err);
+    return res.status(500).json({ error: 'Gagal mengambil data user.' });
+  }
 });
 
 module.exports = router;

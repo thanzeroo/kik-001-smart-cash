@@ -103,6 +103,11 @@ CREATE TRIGGER trg_transactions_updated_at
     BEFORE UPDATE ON public.transactions
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+-- Migration otomatis jika tabel public.transactions sebelumnya sudah ada dari skema lama:
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL;
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
+
 
 -- ------------------------------------------------------------------------------
 -- 5. KATEGORI BAWAAN (DEFAULT SYSTEM GLOBAL CATEGORIES)
